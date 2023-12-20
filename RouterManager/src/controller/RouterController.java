@@ -69,8 +69,10 @@ public class RouterController {
                 case 5:
                     System.out.println("--- get Os version ---");
                     String name = view.inputName();
-                    String version = service.getOsVersion(name);
-                    System.out.println(version);
+                    System.out.println(service.getArea(name));
+
+                     
+                    
                     break;
                 case 6:
                     System.out.println("Exit !");

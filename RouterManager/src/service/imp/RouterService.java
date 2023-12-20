@@ -2,7 +2,11 @@ package service.imp;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import com.jcraft.jsch.*;
 import model.Router;
 import repository.imp.RouterRepo;
@@ -46,56 +50,92 @@ public class RouterService implements IRouterService {
     }
 
     @Override
-    public String getOsVersion(String name) {
+    public ArrayList<String> getArea(String name) {
         String hostname = routerRepo.getRouter(name).getIp();
         String username = "nghiem";
         String password = "nghiem123";
         int port = 22;
-        try {
-            JSch jsch = new JSch();
-            Session session = jsch.getSession(username, hostname, port);
-            session.setPassword(password);
+        String finalString = "";
+        ArrayList<String> result = new ArrayList<>();
+        // SSH connect
+        if (isReachable(name)) {
 
-            // Avoid asking for key confirmation
-            session.setConfig("StrictHostKeyChecking", "no");
+            try {
+                JSch jsch = new JSch();
+                Session session = jsch.getSession(username, hostname, port);
+                session.setPassword(password);
+                session.setConfig("StrictHostKeyChecking", "no");
+                session.connect();
+                Channel channel = session.openChannel("shell");
+                channel.connect();
+                InputStream inputStream = channel.getInputStream();
+                OutputStream outputStream = channel.getOutputStream();
+                // send commands
+                String command1 = "environment no more\n";
+                String command2 = "admin display-config | match \"area 0.0\"\n";
+                outputStream.write(command1.getBytes());
+                outputStream.write(command2.getBytes());
+                outputStream.write("logout\n".getBytes());
+                outputStream.flush();
+                // read inputStream
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while (true) {
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        // System.out.println(bytesRead);
+                        String output = new String(buffer, 0, bytesRead);
+                        finalString = finalString + "\n" + output;
+                    }
+                    channel.disconnect();
+                    session.disconnect();
+                    if (channel.isClosed()) {
+                        break;
+                    }
+                }
 
-            // Connect to the remote device
-            session.connect();
-
-            // Create a channel for executing commands
-            ChannelExec channel = (ChannelExec) session.openChannel("exec");
-
-            // Provide the command you want to execute
-            channel.setCommand("show version");
-
-            // Connect the channel
-            channel.connect();
-
-            // Read the command output
-            InputStream in = channel.getInputStream();
-            byte[] buffer = new byte[1024];
-            StringBuilder result = new StringBuilder();
-            int bytesRead;
-            while ((bytesRead = in.read(buffer)) != -1) {
-                result.append(new String(buffer, 0, bytesRead));
+            } catch (JSchException | IOException e) {
+                e.printStackTrace();
             }
+            String reg = "\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b";
+            Pattern pattern = Pattern.compile(reg);
+            Matcher matcher = pattern.matcher(finalString);
 
-            // Print the command output
-
-            System.out.println(result.toString());
-            // Disconnect the channel and session
-            channel.disconnect();
-            session.disconnect();
-            return result.toString();
-        } catch (JSchException | IOException e) {
-            e.printStackTrace();
+            while (matcher.find()) {
+                result.add(matcher.group());
+                // System.out.println("Match: " + result);
+            }
         }
-        return null;
+        return result;
     }
 
     @Override
     public ArrayList<Router> getAll() {
         return routerRepo.getAll();
+    }
+
+    @Override
+    public boolean isReachable(String name) {
+        String hostname = routerRepo.getRouter(name).getIp();
+        InetAddress inet;
+        // Ping router check
+        try {
+            inet = InetAddress.getByName(hostname);
+            return inet.isReachable(5000);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public String getOspfArea(Router router) {
+
+        // TODO Auto-generated method stub
+        if (isReachable(router.getName())) {
+
+        }
+        throw new UnsupportedOperationException("Unimplemented method 'getOspfArea'");
     }
 
 }

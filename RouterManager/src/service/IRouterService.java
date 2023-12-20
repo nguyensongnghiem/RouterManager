@@ -11,5 +11,7 @@ public interface IRouterService {
     String update(String name);  
     Router getRouter(String name);
     int getIndex(String name);
-    String getOsVersion(String name);    
+    ArrayList<String> getArea(String name);    
+    boolean isReachable(String name);
+    String getOspfArea(Router router);
 }
