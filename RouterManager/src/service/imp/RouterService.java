@@ -7,6 +7,8 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.google.gson.Gson;
 import com.jcraft.jsch.*;
 import model.Router;
 import repository.imp.RouterRepo;
@@ -14,7 +16,7 @@ import service.IRouterService;
 
 public class RouterService implements IRouterService {
     private RouterRepo routerRepo = new RouterRepo();
-
+ 
     @Override
     public String add(Router router) {
         if (routerRepo.getRouter(router.getName()) == null) {
@@ -110,6 +112,7 @@ public class RouterService implements IRouterService {
 
     @Override
     public ArrayList<Router> getAll() {
+        routerRepo.updateFileToDb();
         return routerRepo.getAll();
     }
 
@@ -128,14 +131,29 @@ public class RouterService implements IRouterService {
         }
     }
 
+    
+
     @Override
-    public String getOspfArea(Router router) {
-
-        // TODO Auto-generated method stub
-        if (isReachable(router.getName())) {
-
-        }
-        throw new UnsupportedOperationException("Unimplemented method 'getOspfArea'");
+    public void updateAllOspfToDB() {
+        ArrayList<Router> routers = routerRepo.getAll();
+        for (Router router : routers) {
+            String name = router.getName();
+            // System.out.println(name);
+            ArrayList<String> ospfArea = getArea(name);                   
+            Gson gson = new Gson();
+            String areaToJson = gson.toJson(ospfArea);    
+            // System.out.println(areaToJson); 
+            routerRepo.updateOspf(name, areaToJson);     
+        }       
     }
 
+    @Override
+    public void updateAllPingStatustoDB() {
+        ArrayList<Router> routers = routerRepo.getAll();
+        for (Router router : routers) {
+            String name = router.getName();
+            boolean pingStatus = isReachable(name);
+            routerRepo.updatePing(name, pingStatus);                        
+        }
+    }
 }

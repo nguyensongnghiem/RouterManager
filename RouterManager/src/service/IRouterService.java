@@ -12,6 +12,7 @@ public interface IRouterService {
     Router getRouter(String name);
     int getIndex(String name);
     ArrayList<String> getArea(String name);    
-    boolean isReachable(String name);
-    String getOspfArea(Router router);
+    boolean isReachable(String name);    
+    void updateAllOspfToDB();
+    void updateAllPingStatustoDB();
 }

@@ -1,6 +1,8 @@
 {
     "java.project.referencedLibraries": [
         "lib/**/*.jar",
-        "jsch-0.1.55.jar"
+        "jsch-0.1.55.jar",
+        "g:\\DEV\\mysql-connector-j-8.2.0\\mysql-connector-j-8.2.0\\mysql-connector-j-8.2.0.jar",
+        "gson-2.10.1.jar"
     ]
 }

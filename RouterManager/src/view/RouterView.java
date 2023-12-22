@@ -29,9 +29,11 @@ public class RouterView {
             System.out.println("2. Add new router ");
             System.out.println("3. Show info by name");
             System.out.println("4. Delete router");
-            System.out.println("5. Show router os");
-
-            System.out.println("6. Exit");
+            System.out.println("5. Show running ospf");
+            System.out.println("6. Update All ospf to DB");
+            System.out.println("7. Update ping status to DB");
+            System.out.println("8. xxxx");
+            System.out.println("10. Exit");
             System.out.print("Select a task: ");
             int selected = Integer.parseInt(scanner.nextLine());
             return selected;

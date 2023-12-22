@@ -45,5 +45,19 @@ public abstract class Router {
     public String toString() {
         return "Router [name=" + name + ", ip=" + ip + ", vendor=" + vendor + ", siteId=" + siteId + "]";
     }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {              
+            return true;
+        }
+        if (obj == null || this.getClass() != obj.getClass()){
+            return false;
+        }
+        Router anotherRouter = (Router) obj;
+        if (this.getName()==anotherRouter.getName() && this.getIp()==anotherRouter.getIp()) {
+            return true;
+        }
+        else return false;
+    }
     
 }

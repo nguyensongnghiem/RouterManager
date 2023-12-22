@@ -3,11 +3,12 @@ package controller;
 import java.util.ArrayList;
 
 import model.Router;
+import service.IRouterService;
 import service.imp.RouterService;
 import view.RouterView;
 
 public class RouterController {
-    private RouterService service;
+    private IRouterService service;
     private RouterView view;
 
     public RouterController() {
@@ -38,14 +39,19 @@ public class RouterController {
 
     public void update(String name) {
     }
-
+    public void updateAllOspfToDB() {
+        service.updateAllOspfToDB();
+    }
+    public void updatePingStatustoDB(){
+        service.updateAllPingStatustoDB();
+    }
     public void startMain() {
         boolean exitFlag = false;
         do {
             int selected = view.getMenuSelect();
             switch (selected) {
                 case 1:
-                // Show all router
+                    // Show all router
                     ArrayList<Router> routers = service.getAll();
                     view.showAll(routers);
                     break;
@@ -63,18 +69,26 @@ public class RouterController {
                     // delete router
                     System.out.println("--- Delete router ---");
                     deleteRouter();
-
                     break;
 
                 case 5:
-                    System.out.println("--- get Os version ---");
+                    System.out.println("--- get running Ospf version ---");
                     String name = view.inputName();
                     System.out.println(service.getArea(name));
-
-                     
-                    
                     break;
                 case 6:
+                    System.out.println("--- Update All Ospf to DB---");
+                    updateAllOspfToDB();
+                    break;
+                case 7:
+                    System.out.println("--- Update Ping to DB---");
+                    updatePingStatustoDB();
+                    break;
+                case 8:
+                    System.out.println("--- xxxxx---");
+
+                    break;
+                case 10:
                     System.out.println("Exit !");
                     exitFlag = true;
                     break;
