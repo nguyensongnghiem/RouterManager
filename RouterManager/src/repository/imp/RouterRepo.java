@@ -8,9 +8,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.mysql.cj.jdbc.Driver;
 import com.mysql.cj.jdbc.StatementImpl;
 import model.Router;
+import model.imp.JuniperRouter;
 import model.imp.NokiaRouter;
 import repository.IRouterRepo;
 
@@ -33,7 +37,8 @@ public class RouterRepo implements IRouterRepo {
                 String ip = rs.getString("ip");
                 String vendor = rs.getString("vendor");
                 String siteId = rs.getString("siteId");
-                routers.add(new NokiaRouter(name, ip, vendor, siteId));
+                String provinceId = rs.getString("provinceId");
+                routers.add(new NokiaRouter(name, ip, vendor, siteId, provinceId));
             }
             closeConnection();
 
@@ -45,13 +50,13 @@ public class RouterRepo implements IRouterRepo {
     }
 
     @Override
-    public void add(Router router) {
+    public void addRouter(Router router) {  // Chưa triển khai
         ArrayList<Router> routers = new ArrayList<Router>();
         routers.add(router);
     }
 
     @Override
-    public void delete(String name) {
+    public void deleteRouter(String name) {
         ArrayList<Router> routers = new ArrayList<Router>();
 
         for (int i = 0; i < routers.size(); i++) {
@@ -62,7 +67,7 @@ public class RouterRepo implements IRouterRepo {
     }
 
     @Override
-    public void update(String name) {
+    public void updateRouter(String name) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'update'");
     }
@@ -79,7 +84,19 @@ public class RouterRepo implements IRouterRepo {
                 String ip = rs.getString("ip");
                 String vendor = rs.getString("vendor");
                 String siteId = rs.getString("siteId");
-                router = new NokiaRouter(name, ip, vendor, siteId);
+                String provinceId = rs.getString("provinceId");
+                switch (vendor) {
+                    case "Nokia":
+                    router = new NokiaRouter(name, ip, vendor, siteId, provinceId);
+                        
+                        break;
+                    case "Juniper":
+                    router = new JuniperRouter(name, ip, vendor, siteId, provinceId);
+                        
+                        break;
+                    default:
+                        break;
+                }
             }
             closeConnection();
         } catch (SQLException | ClassNotFoundException e) {
@@ -100,15 +117,17 @@ public class RouterRepo implements IRouterRepo {
         return -1;
     }
 
+    @Override
     public void updateFileToDb() {
         try {
             con = getConnection();
             Statement st = con.createStatement();
             String line = "";
-            BufferedReader br = new BufferedReader(new FileReader("RouterManager\\src\\Thietbi_20231220.csv"));
+            BufferedReader br = new BufferedReader(
+                    new FileReader("RouterManager\\src\\RouterData\\PY_CSG_20231223.csv"));
             br.readLine();
             while (((line = br.readLine()) != null)) {
-                String[] routerString = line.split(";");
+                String[] routerString = line.split(",");
                 String name = routerString[0];
                 String ip = routerString[1];
                 String vendor = routerString[2];
@@ -117,7 +136,6 @@ public class RouterRepo implements IRouterRepo {
                         + "\",\""
                         + vendor + "\",\"" + siteId + "\")";
                 st.executeUpdate(queryString);
-
             }
             con.close();
         } catch (Exception e) {
@@ -140,16 +158,17 @@ public class RouterRepo implements IRouterRepo {
     }
 
     @Override
-    public void updatePing(String name, boolean pingStatus) {
-       try {
+    public void updateDbPing(String name, boolean pingStatus) {
+        try {
             int ping;
             if (pingStatus) {
-                ping =1;
-            } else ping = 0;
+                ping = 1;
+            } else
+                ping = 0;
             con = getConnection();
             Statement st = con.createStatement();
-            String queryString = "UPDATE routers SET ping ="+ ping +" WHERE name=\""+name+"\"";
-            st.executeUpdate(queryString);            
+            String queryString = "UPDATE routers SET ping =" + ping + " WHERE name=\"" + name + "\"";
+            st.executeUpdate(queryString);
             con.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -157,17 +176,68 @@ public class RouterRepo implements IRouterRepo {
     }
 
     @Override
-    public void updateOspf(String name, String osfp) {
-     try {           
+    public void updateDbArea(String name, String osfp) {
+        try {
             con = getConnection();
             Statement st = con.createStatement();
-            String queryString = "UPDATE routers SET ospf =\'"+ osfp +"\' WHERE name=\'"+name+"\'";
-            System.out.println(queryString);
-            st.executeUpdate(queryString);            
+            String queryString = "UPDATE routers SET ospf =\'" + osfp + "\' WHERE name=\'" + name + "\'";
+            System.out.println("Updated " + osfp + "to router " + name + " in Database");
+            st.executeUpdate(queryString);
             con.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }   
+    }
 
+    @Override
+    public String getDbArea(String name) {
+        String ospf = null;
+        try {
+            con = getConnection();
+            Statement st = con.createStatement();
+            String queryString = "SELECT ospf FROM routers WHERE name=\'" + name + "\'";
+            ResultSet rs = st.executeQuery(queryString);
+            if (rs.next()) {
+
+                ospf = rs.getString("ospf");
+                closeConnection();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ospf;
+    }
+
+    @Override
+    public void updateDbAreaPool(String provinceId, String ospfArea) {
+        try {
+            con = getConnection();
+            Statement st = con.createStatement();
+            String queryString = "INSERT INTO ospf_pool (provinceId, ospfArea) VALUES (\"" + provinceId + "\",\""
+                    + ospfArea + "\")";
+            System.out.println("Insert " + ospfArea + "to ospf pool of " + provinceId + " in Database");
+            st.executeUpdate(queryString);
+            con.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public ArrayList<String> getDbAreaPool(String provinceId) {
+        ArrayList<String> ospfPool = new ArrayList<>();
+        try {
+            con = getConnection();
+            Statement st = con.createStatement();
+            String queryString = "SELECT ospfArea FROM ospf_pool WHERE provinceId=\'" + provinceId + "\'";
+            ResultSet rs = st.executeQuery(queryString);
+            while (rs.next()) {
+                ospfPool.add(rs.getString("ospfArea"));
+            }
+            closeConnection();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ospfPool;
+    }
 }

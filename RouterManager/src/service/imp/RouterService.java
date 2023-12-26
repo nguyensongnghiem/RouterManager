@@ -3,24 +3,31 @@ package service.imp;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.jcraft.jsch.*;
+
 import model.Router;
+
+import repository.IRouterRepo;
 import repository.imp.RouterRepo;
 import service.IRouterService;
 
 public class RouterService implements IRouterService {
-    private RouterRepo routerRepo = new RouterRepo();
- 
+    private IRouterRepo routerRepo = new RouterRepo();    
+
     @Override
-    public String add(Router router) {
+    public String addRouter(Router router) {
         if (routerRepo.getRouter(router.getName()) == null) {
-            routerRepo.add(router);
+            routerRepo.addRouter(router);
             return "Router added to database !";
         }
         return "Router already existed";
@@ -29,7 +36,7 @@ public class RouterService implements IRouterService {
     @Override
     public String delete(String name) {
         if (routerRepo.getRouter(name) != null) {
-            routerRepo.delete(name);
+            routerRepo.deleteRouter(name);
             return "Router removed from database !";
         }
         return "Router not existed !";
@@ -37,7 +44,6 @@ public class RouterService implements IRouterService {
 
     @Override
     public String update(String name) {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'update'");
     }
 
@@ -52,67 +58,16 @@ public class RouterService implements IRouterService {
     }
 
     @Override
-    public ArrayList<String> getArea(String name) {
-        String hostname = routerRepo.getRouter(name).getIp();
-        String username = "nghiem";
-        String password = "nghiem123";
-        int port = 22;
-        String finalString = "";
-        ArrayList<String> result = new ArrayList<>();
-        // SSH connect
-        if (isReachable(name)) {
-
-            try {
-                JSch jsch = new JSch();
-                Session session = jsch.getSession(username, hostname, port);
-                session.setPassword(password);
-                session.setConfig("StrictHostKeyChecking", "no");
-                session.connect();
-                Channel channel = session.openChannel("shell");
-                channel.connect();
-                InputStream inputStream = channel.getInputStream();
-                OutputStream outputStream = channel.getOutputStream();
-                // send commands
-                String command1 = "environment no more\n";
-                String command2 = "admin display-config | match \"area 0.0\"\n";
-                outputStream.write(command1.getBytes());
-                outputStream.write(command2.getBytes());
-                outputStream.write("logout\n".getBytes());
-                outputStream.flush();
-                // read inputStream
-                byte[] buffer = new byte[1024];
-                int bytesRead;
-                while (true) {
-                    while ((bytesRead = inputStream.read(buffer)) != -1) {
-                        // System.out.println(bytesRead);
-                        String output = new String(buffer, 0, bytesRead);
-                        finalString = finalString + "\n" + output;
-                    }
-                    channel.disconnect();
-                    session.disconnect();
-                    if (channel.isClosed()) {
-                        break;
-                    }
-                }
-
-            } catch (JSchException | IOException e) {
-                e.printStackTrace();
-            }
-            String reg = "\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b";
-            Pattern pattern = Pattern.compile(reg);
-            Matcher matcher = pattern.matcher(finalString);
-
-            while (matcher.find()) {
-                result.add(matcher.group());
-                // System.out.println("Match: " + result);
-            }
-        }
-        return result;
+    public ArrayList<String> getRunArea(String name) {        
+        // String hostname = routerRepo.getRouter(name).getIp();
+        Router router = getRouter(name);   
+        System.out.println(router);    
+        ArrayList<String> areaList = router.getRunArea();
+        return areaList;
     }
 
     @Override
     public ArrayList<Router> getAll() {
-        routerRepo.updateFileToDb();
         return routerRepo.getAll();
     }
 
@@ -131,20 +86,19 @@ public class RouterService implements IRouterService {
         }
     }
 
-    
-
     @Override
     public void updateAllOspfToDB() {
         ArrayList<Router> routers = routerRepo.getAll();
         for (Router router : routers) {
             String name = router.getName();
-            // System.out.println(name);
-            ArrayList<String> ospfArea = getArea(name);                   
+            String ospfDB = routerRepo.getDbArea(name);
+            if (ospfDB == null || ospfDB =="[]") {
+            ArrayList<String> areaList = getRunArea(name);
             Gson gson = new Gson();
-            String areaToJson = gson.toJson(ospfArea);    
-            // System.out.println(areaToJson); 
-            routerRepo.updateOspf(name, areaToJson);     
-        }       
+            String areaToJson = gson.toJson(areaList);
+            routerRepo.updateDbArea(name, areaToJson);
+            }
+        }
     }
 
     @Override
@@ -153,7 +107,47 @@ public class RouterService implements IRouterService {
         for (Router router : routers) {
             String name = router.getName();
             boolean pingStatus = isReachable(name);
-            routerRepo.updatePing(name, pingStatus);                        
+            routerRepo.updateDbPing(name, pingStatus);
         }
+    }
+
+    @Override
+    public void updateFileToDb() {
+        routerRepo.updateFileToDb();
+    }
+
+    @Override
+    public HashSet<String> createDbAreaPool(String provinceId) {
+        ArrayList<Router> routers = routerRepo.getAll();
+        HashSet<String> ospfSet = new HashSet<>();
+        for (Router router : routers) {
+            String name = router.getName();
+            String routerProvince = router.getProvinceId();
+            if (routerProvince.equals(provinceId)) {
+                String ospfDB = routerRepo.getDbArea(name);
+                Gson gson = new Gson();
+                Type collectionType = new TypeToken<ArrayList<String>>() {
+                }.getType();
+                ArrayList<String> list = gson.fromJson(ospfDB, collectionType);
+                for (String ospf : list) {
+                    ospfSet.add(ospf);
+                }
+            }
+        }
+        System.out.println(ospfSet.toString());
+        for (String ospfArea : ospfSet) {
+            routerRepo.updateDbAreaPool(provinceId, ospfArea);
+        }
+        return ospfSet;
+    }
+
+    @Override
+    public ArrayList<String> getOspfPool(String provinceId) {
+        return routerRepo.getDbAreaPool(provinceId);
+    }
+
+    @Override
+    public String getOspf(String name) {
+        return routerRepo.getDbArea(name);
     }
 }

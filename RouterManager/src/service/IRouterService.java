@@ -1,18 +1,27 @@
 package service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import model.Router;
 
 public interface IRouterService {
     ArrayList<Router> getAll();
-    String add(Router router);
+    // handle with DB
+    String addRouter(Router router);
     String delete(String name);
     String update(String name);  
     Router getRouter(String name);
-    int getIndex(String name);
-    ArrayList<String> getArea(String name);    
-    boolean isReachable(String name);    
-    void updateAllOspfToDB();
+    String getOspf(String name);
+    void updateFileToDb();
     void updateAllPingStatustoDB();
+    void updateAllOspfToDB();
+    ArrayList<String> getOspfPool(String provinceId);
+    HashSet<String> createDbAreaPool(String provinceId);
+    int getIndex(String name);
+    //handle with router connect
+    ArrayList<String> getRunArea(String name);    
+    boolean isReachable(String name);    
+    
+    
 }

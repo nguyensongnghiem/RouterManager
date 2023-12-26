@@ -1,28 +1,36 @@
 package model.imp;
 
+import java.util.ArrayList;
+
 import model.Router;
 
 public class NokiaRouter extends Router{
-    private String sysIp ;
+    private String systemIp ;
 
-    public NokiaRouter(String name, String ip, String vendor, String siteId) {
-        super(name, ip, vendor, siteId);
-    }
+    public NokiaRouter(String name, String ip, String vendor, String siteId, String provinceId) {
+        super(name, ip, vendor, siteId, provinceId);
+        routerBehavior = new NokiaBehavior();
+    }   
 
     public NokiaRouter() {
     }
     
-    public NokiaRouter(String name, String ip, String vendor, String siteId, String sysIp) {
-        super(name, ip, vendor, siteId);
-        this.sysIp = sysIp;
+    public NokiaRouter(String name, String ip, String vendor, String siteId, String provinceId, String sysIp) {
+        super(name, ip, vendor, siteId, provinceId);
+        this.systemIp = sysIp;
     }
 
-    public String getSysIp() {
-        return sysIp;
+    public String getSystemIp() {
+        return systemIp;
     }
 
-    public void setSysIp(String sysIp) {
-        this.sysIp = sysIp;
+    public void setSystemIp(String sysIp) {
+        this.systemIp = sysIp;
+    }
+
+    @Override
+    public ArrayList<String> getRunArea() {
+        return routerBehavior.getRunArea(this.getIp());
     }
     
     

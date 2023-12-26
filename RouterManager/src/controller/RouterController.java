@@ -21,7 +21,7 @@ public class RouterController {
 
     public void addRouter() {
         Router newRouter = view.inputRouter();
-        String mess = service.add(newRouter);
+        String mess = service.addRouter(newRouter);
         view.showMessage(mess);
     }
 
@@ -39,20 +39,28 @@ public class RouterController {
 
     public void update(String name) {
     }
+
     public void updateAllOspfToDB() {
         service.updateAllOspfToDB();
     }
-    public void updatePingStatustoDB(){
+
+    public void updatePingStatustoDB() {
         service.updateAllPingStatustoDB();
     }
+
+    public void updateFileToDb() {
+        service.updateFileToDb();
+    }
+
     public void startMain() {
         boolean exitFlag = false;
+        ArrayList<Router> routers;
         do {
             int selected = view.getMenuSelect();
             switch (selected) {
                 case 1:
                     // Show all router
-                    ArrayList<Router> routers = service.getAll();
+                    routers = service.getAll();
                     view.showAll(routers);
                     break;
                 case 2:
@@ -74,7 +82,7 @@ public class RouterController {
                 case 5:
                     System.out.println("--- get running Ospf version ---");
                     String name = view.inputName();
-                    System.out.println(service.getArea(name));
+                    System.out.println(service.getRunArea(name));
                     break;
                 case 6:
                     System.out.println("--- Update All Ospf to DB---");
@@ -85,10 +93,29 @@ public class RouterController {
                     updatePingStatustoDB();
                     break;
                 case 8:
-                    System.out.println("--- xxxxx---");
-
+                    System.out.println("--- Update file csv to Database---");
+                    updateFileToDb();
+                    break;
+                case 9:
+                    System.out.println("--- Generate Ospf pool ---");
+                    service.createDbAreaPool("KH");
                     break;
                 case 10:
+                    System.out.println("--- Show all Ring  ---");
+                    String provinceId = view.inputProviceId();
+                    ArrayList<String> ospfPool = service.getOspfPool(provinceId);
+                    System.out.println(ospfPool.toString());
+                    // routers = service.getAll();
+                    // for (String ospf : ospfPool) {
+                    //     System.out.println("Area " + ospf + " : \n");
+                    //     for (Router router : routers) {
+                    //         if (service.getOspf(router.getName()) == ospf) {
+                    //             System.out.print(router.getName() + " ; ");
+                    //         }
+                    //     }
+                    // }
+                    break;
+                case 15:
                     System.out.println("Exit !");
                     exitFlag = true;
                     break;

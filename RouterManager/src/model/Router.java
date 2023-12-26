@@ -1,20 +1,31 @@
 package model;
 
+import java.util.ArrayList;
+
 /**
  * Router
  */
 public abstract class Router {
+    protected IRouterBehavior routerBehavior;
     private String name;
     private String ip;
     private String vendor;
     private String siteId;
-    public Router(String name, String ip, String vendor, String siteId) {
+    private String provinceId;    
+    public Router(String name, String ip, String vendor, String siteId, String provinceId) {
         this.name = name;
         this.ip = ip;
         this.vendor = vendor;
         this.siteId = siteId;
+        this.provinceId = provinceId;        
     }
     public Router() {
+    }
+    public IRouterBehavior getRouterBehavior() {
+        return routerBehavior;
+    }
+    public void setRouterBehavior(IRouterBehavior routerBehavior) {
+        this.routerBehavior = routerBehavior;
     }
     public String getName() {
         return name;
@@ -40,10 +51,18 @@ public abstract class Router {
     public void setSiteId(String siteId) {
         this.siteId = siteId;
     }
-    
+    public String getProvinceId() {
+        return provinceId;
+    }
+    public void setProvinceId(String provinceId) {
+        this.provinceId = provinceId;
+    }
+    public ArrayList<String> getRunArea() {
+        return routerBehavior.getRunArea(ip);
+    };
     @Override
     public String toString() {
-        return "Router [name=" + name + ", ip=" + ip + ", vendor=" + vendor + ", siteId=" + siteId + "]";
+        return "Router [name=" + name + ", ip=" + ip + ", vendor=" + vendor + ", siteId=" + siteId + ", provinceId=" + provinceId +"]";
     }
     @Override
     public boolean equals(Object obj) {
@@ -59,5 +78,6 @@ public abstract class Router {
         }
         else return false;
     }
+    
     
 }

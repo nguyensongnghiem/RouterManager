@@ -1,7 +1,7 @@
+package view;
+
 import controller.RouterController;
 import service.imp.RouterService;
-import view.RouterView;
-
 /**
  * Main
  */
