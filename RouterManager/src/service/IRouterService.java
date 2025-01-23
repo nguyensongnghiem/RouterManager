@@ -3,7 +3,7 @@ package service;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import model.Router;
+import model.router.Router;
 
 public interface IRouterService {
     ArrayList<Router> getAll();

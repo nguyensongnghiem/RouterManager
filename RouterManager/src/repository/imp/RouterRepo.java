@@ -8,14 +8,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 
-import com.mysql.cj.jdbc.Driver;
-import com.mysql.cj.jdbc.StatementImpl;
-import model.Router;
-import model.imp.JuniperRouter;
-import model.imp.NokiaRouter;
+import model.router.Router;
+import model.router.imp.JuniperRouter;
+import model.router.imp.NokiaRouter;
 import repository.IRouterRepo;
 
 public class RouterRepo implements IRouterRepo {

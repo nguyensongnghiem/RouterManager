@@ -3,6 +3,8 @@
         "lib/**/*.jar",
         "jsch-0.1.55.jar",
         "g:\\DEV\\mysql-connector-j-8.2.0\\mysql-connector-j-8.2.0\\mysql-connector-j-8.2.0.jar",
-        "gson-2.10.1.jar"
+        "gson-2.10.1.jar",
+        "javax.servlet-3.0.jar",
+        "servlet-api.jar"
     ]
 }

@@ -1,0 +1,581 @@
+NOKIA-IPSO-SYSTEM-MIB DEFINITIONS ::= BEGIN
+
+-- 4567890123456789012345678901234567890123456789012345678901234567890123456789
+-- This line is 80 characters wide, keep lines in this file shorter than that--
+-- ===============================================================
+--	   Copyright (C) Nokia Telecommunications Oy 1998
+-- ===============================================================
+-- This MIB Module defines the System MIB for products running IPSO.
+-- More detailed description of the variables and tables is
+-- provided in other related documentation.
+--
+-- Format:   SNMP v2 MIB (Simple network management protocol,
+--	     version 2, Management Information Base  )
+--
+-- ================================================================
+-- Author      : Shoba Narasimhan Panappakkam
+-- Version     : 1.03
+-- Last Update : 10.20.1999	 - Added ipsoNotificationGroup.
+--                                 Added 5 system traps.
+-- ****************************************************************
+-- Author      : Alan Francisco
+-- Version     : 1.02
+-- Created     : 14.07.1998
+-- Last Update : 09.11.1998	 - changed ipsoChassisMBType to
+--				   DisplayString
+--		 20.08.1998	 - removed ipsoChassisType
+--		 19.08.1998	 - removed ipsoFanSpeed
+--		 12.08.1998	 - removed ipsoCardStorageCapacity and
+--				   made other corrections   
+--		 03.08.1998      - Added Nokia Telecommunications
+--		            	   header
+-- ================================================================
+
+IMPORTS
+
+    enterprises
+	    FROM RFC1155-SMI
+    INTEGER, Gauge
+            FROM SNMPv2-SMI
+    OBJECT-TYPE
+            FROM RFC-1212
+    ifIndex, ifType
+            FROM IF-MIB
+    IANAifType
+	    FROM IANAifType-MIB
+    DisplayString, DateAndTime
+	    FROM SNMPv2-TC
+    hrPartitionIndex, hrPartitionLabel, hrFSMountPoint
+            FROM HOST-RESOURCES-MIB;
+
+nokia	 	OBJECT IDENTIFIER ::= {enterprises 94}
+nokiaProducts 	OBJECT IDENTIFIER ::= {nokia 1}
+ipsoProducts 	OBJECT IDENTIFIER ::= {nokiaProducts 21}
+ipsoSystem 	OBJECT IDENTIFIER ::= {ipsoProducts 1}
+
+ipsoChassisGroup	OBJECT IDENTIFIER ::= {ipsoSystem 1}
+ipsoFanGroup		OBJECT IDENTIFIER ::= {ipsoSystem 2}
+ipsoPowerSupplyGroup	OBJECT IDENTIFIER ::= {ipsoSystem 3}
+ipsoConfigGroup		OBJECT IDENTIFIER ::= {ipsoSystem 4}
+ipsoImageGroup		OBJECT IDENTIFIER ::= {ipsoSystem 5}
+ipsoStorageGroup	OBJECT IDENTIFIER ::= {ipsoSystem 6}
+ipsoProcessGroup	OBJECT IDENTIFIER ::= {ipsoSystem 7}
+ipsoNotificationGroup	OBJECT IDENTIFIER ::= {ipsoSystem 8}
+
+-- IPSO Chassis Group
+
+	ipsoChassisSerialNumber OBJECT-TYPE
+	SYNTAX DisplayString
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The serial number of this device. "
+	::= { ipsoChassisGroup 1 }
+
+	ipsoChassisMBType OBJECT-TYPE
+	SYNTAX DisplayString
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"An string value representing the type of
+		 motherboard populating this device. "
+	::= { ipsoChassisGroup 2 }
+
+	ipsoChassisMBRevNumber OBJECT-TYPE
+	SYNTAX DisplayString
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The revision number for the motherboard of this chassis. "
+	::= { ipsoChassisGroup 3 }
+
+	ipsoChassisMBSerialNumber OBJECT-TYPE
+	SYNTAX DisplayString
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The serial number for the motherboard of this chassis. "
+	::= { ipsoChassisGroup 4 }
+
+	ipsoChassisTemperature OBJECT-TYPE
+	SYNTAX INTEGER {
+		       normal(1),
+		       overTemperature(2)
+		       }
+	ACCESS read-only
+	STATUS optional
+	DESCRIPTION
+		"An indication of whether or not the internal
+		 temperature reading of this chassis is higher
+		 than the recommended operating temperature."
+	::= { ipsoChassisGroup 5 }
+
+	ipsoCardTable OBJECT-TYPE
+	SYNTAX SEQUENCE OF IpsoCardEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"A table of slots or onboard network interfaces
+		 in the chassis. "
+	::= { ipsoChassisGroup 6 }
+
+	ipsoCardEntry OBJECT-TYPE
+	SYNTAX IpsoCardEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"A sequence of slot entries containing the
+		 operational status, and ifType (if applicable)
+		 of the slot's module."
+	INDEX { ipsoCardIndex }
+	::= { ipsoCardTable 1 }
+
+IpsoCardEntry ::= SEQUENCE {
+	  ipsoCardIndex INTEGER,
+	  ipsoCardOperStatus INTEGER,
+	  ipsoCardIfType IANAifType
+}
+
+	ipsoCardIndex OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The number of the slot in which this card is plugged. "
+	::= { ipsoCardEntry 1 }
+
+	ipsoCardOperStatus OBJECT-TYPE
+	SYNTAX INTEGER {
+	       enabled(1),
+	       disabled(2)
+	       }
+	ACCESS read-only 
+	STATUS mandatory
+	DESCRIPTION
+		"The operational status of this card. "
+	::= { ipsoCardEntry 2 }
+
+	ipsoCardIfType OBJECT-TYPE
+	SYNTAX IANAifType
+	ACCESS read-only
+	STATUS optional
+	DESCRIPTION
+		"The ifType value for any interface(s) on this card.
+		 Please refer to RFC 1213."
+	::= { ipsoCardEntry 3 }
+ 
+-- IPSO Fan Group
+
+	ipsoFanTable OBJECT-TYPE
+	SYNTAX SEQUENCE OF IpsoFanEntry
+	ACCESS not-accessible
+	STATUS optional
+	DESCRIPTION
+		"A listing of fans which are present in this chassis. "
+	::= { ipsoFanGroup 1 }
+
+	ipsoFanEntry OBJECT-TYPE
+	SYNTAX IpsoFanEntry
+	ACCESS not-accessible
+	STATUS optional
+	DESCRIPTION
+		"A grouping of objects displaying certain characteristics
+		 of each fan present in the chassis."
+	INDEX { ipsoFanIndex }
+	::= { ipsoFanTable 1 }
+
+IpsoFanEntry ::= SEQUENCE {
+	     ipsoFanIndex INTEGER,
+	     ipsoFanOperStatus INTEGER
+}
+
+	ipsoFanIndex OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS optional
+	DESCRIPTION
+		"A unique index for this particular fan. "
+	::= { ipsoFanEntry 1 }
+
+	ipsoFanOperStatus OBJECT-TYPE
+	SYNTAX INTEGER {
+	       running(1),
+	       notRunning(2)
+	       }
+	ACCESS read-only
+	STATUS optional
+	DESCRIPTION
+		"The operational status of this fan. "
+	::= { ipsoFanEntry 2 }
+
+-- IPSO Power Supply Group
+
+	ipsoPowerSupplyTable OBJECT-TYPE
+	SYNTAX SEQUENCE OF IpsoPowerSupplyEntry
+	ACCESS not-accessible
+	STATUS optional
+	DESCRIPTION
+		"A table of all power supplies installed in this chassis. "
+	::= { ipsoPowerSupplyGroup 1 }
+
+	ipsoPowerSupplyEntry OBJECT-TYPE
+	SYNTAX IpsoPowerSupplyEntry
+	ACCESS not-accessible
+	STATUS optional
+	DESCRIPTION
+		"A list of characteristics of each power supply. "
+	INDEX { ipsoPowerSupplyIndex }
+	::= { ipsoPowerSupplyTable 1 }
+
+IpsoPowerSupplyEntry ::= SEQUENCE {
+      ipsoPowerSupplyIndex INTEGER,
+      ipsoPowerSupplyOverTemperature INTEGER,
+      ipsoPowerSupplyOperStatus INTEGER
+}
+
+	ipsoPowerSupplyIndex OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS optional
+	DESCRIPTION
+		"A unique index representing this power supply."
+	::= { ipsoPowerSupplyEntry 1 }
+
+	ipsoPowerSupplyOverTemperature OBJECT-TYPE
+	SYNTAX INTEGER {
+		       normal(1),
+		       overTemperature(2)
+		       }
+	ACCESS read-only
+	STATUS optional
+	DESCRIPTION
+		"An indication of whether or not this power supply's
+		 internal temperature is over the recommended
+		 operation temperature limit. "
+	::= { ipsoPowerSupplyEntry 2 }
+
+	ipsoPowerSupplyOperStatus OBJECT-TYPE
+	SYNTAX INTEGER {
+	       running(1),
+	       notRunning(2)
+	       }
+	ACCESS read-only
+	STATUS optional
+	DESCRIPTION
+		"The operational status of this power supply. "
+	::= { ipsoPowerSupplyEntry 3 }
+
+-- IPSO Configuration Group
+
+	ipsoConfigTable OBJECT-TYPE
+	SYNTAX SEQUENCE OF IpsoConfigEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"A table of available configurations for this
+		 system. "
+	::= { ipsoConfigGroup 1 }
+
+	ipsoConfigEntry OBJECT-TYPE
+	SYNTAX IpsoConfigEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"A list of attributes for each available configuration
+		 on this system. "
+	INDEX { ipsoConfigIndex }
+	::= { ipsoConfigTable 1 }
+
+IpsoConfigEntry ::= SEQUENCE {
+            ipsoConfigIndex INTEGER,
+	    ipsoConfigFilePath DisplayString,
+	    ipsoConfigFileDateAndTime DateAndTime
+}
+
+	ipsoConfigIndex OBJECT-TYPE
+	SYNTAX INTEGER(1..2147483647)
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The index for this configuration, with 1 representing
+		 the currently running database and traversing from
+		 newest to oldest. "
+	::= { ipsoConfigEntry 1}
+
+	ipsoConfigFilePath OBJECT-TYPE
+	SYNTAX DisplayString
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The absolute pathname and filename which holds a
+		 record of this configuration, truncated to within
+		 255 characters. "
+	::= { ipsoConfigEntry 2 }
+
+	ipsoConfigFileDateAndTime OBJECT-TYPE
+	SYNTAX DateAndTime
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The date and time of the last time this file was
+		 changed. "
+	::= { ipsoConfigEntry 3 }
+
+	ipsoConfigLogSize OBJECT-TYPE
+	SYNTAX INTEGER(1..255)
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+		"A maximum limit on the number of entries which may
+		 be recorded in the ipsoConfigLogTable. "
+	::= { ipsoConfigGroup 2 }
+
+	ipsoConfigLogTable OBJECT-TYPE
+	SYNTAX SEQUENCE OF IpsoConfigLogEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"A log of the most recent configuration changes on
+		 this system. "
+	::= { ipsoConfigGroup 3 }
+
+	ipsoConfigLogEntry OBJECT-TYPE
+	SYNTAX IpsoConfigLogEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"A listing of attributes for a configuration change.
+		 This table lists the oldest configuration change
+		 in the table and proceeds toward the most recent
+		 configuration change. "
+	INDEX {	ipsoConfigLogIndex }
+	::= { ipsoConfigLogTable 1 }
+
+IpsoConfigLogEntry ::= SEQUENCE {
+		ipsoConfigLogIndex INTEGER,
+		ipsoConfigLogDescr DisplayString
+}
+
+	ipsoConfigLogIndex OBJECT-TYPE
+	SYNTAX INTEGER(1..255)
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The unique index of this configuration change entry. "
+	::= { ipsoConfigLogEntry 1 }
+
+	ipsoConfigLogDescr OBJECT-TYPE
+	SYNTAX DisplayString
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"A synopsis of the nature of the configuration change. "
+	::= { ipsoConfigLogEntry 2 }
+
+-- IPSO Image Table
+
+	ipsoImageTable OBJECT-TYPE
+	SYNTAX SEQUENCE OF IpsoImageEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"A table of resident kernel images on this system,
+		 including the currently up-and-running kernel. "
+	::= { ipsoImageGroup 1 }
+
+	ipsoImageEntry OBJECT-TYPE
+	SYNTAX IpsoImageEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"A series of attributes for each image including
+		 date loaded, version number, serial number, etc. "
+	INDEX { ipsoImageIndex }
+	::= { ipsoImageTable 1 }
+
+IpsoImageEntry ::= SEQUENCE {
+	ipsoImageIndex INTEGER,
+	ipsoImageVersionNumber DisplayString,
+	ipsoImageSerialNumber DisplayString,
+	ipsoImageTimeOfLoad DateAndTime
+}
+
+	ipsoImageIndex OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"A unique index for the image represented by this entry.
+		 The currently running image has a index value of 1,
+		 and subsequent images are indexed from earliest loaded
+		 image to most recently loaded image. "
+	::= { ipsoImageEntry 1 }
+
+	ipsoImageVersionNumber OBJECT-TYPE
+	SYNTAX DisplayString
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The version number of this image. "
+	::= { ipsoImageEntry 2 }
+
+	ipsoImageSerialNumber OBJECT-TYPE
+	SYNTAX DisplayString
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The serial number of this image. "
+	::= { ipsoImageEntry 3 }
+
+	ipsoImageTimeOfLoad OBJECT-TYPE
+	SYNTAX DateAndTime
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The date and time when this instance of the image
+		 had been first transferred onto this device. "
+	::= { ipsoImageEntry 4 }
+
+-- IPSO Storage Group
+
+	ipsoSIMMTotal OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The total memory capacity in megabytes contained
+		 in the SIMM sockets. "
+	::= { ipsoStorageGroup 1 }
+
+-- IPSO Process Group
+
+	ipsoProcessorUtilization OBJECT-TYPE
+	SYNTAX Gauge
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The current percentage of CPU utilization. "
+	::= { ipsoProcessGroup 1 }
+
+	ipsoProcessTable OBJECT-TYPE
+	SYNTAX SEQUENCE OF IpsoProcessEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"A table of all processes currently running on this system. "
+	::= { ipsoProcessGroup 2 }
+
+	ipsoProcessEntry OBJECT-TYPE
+	SYNTAX IpsoProcessEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"A sequence of objects describing each process's
+		 execution. "
+	INDEX { ipsoProcessID }
+	::= { ipsoProcessTable 1 }
+
+IpsoProcessEntry ::= SEQUENCE {
+	ipsoProcessID INTEGER,
+	ipsoProcessParentID INTEGER,
+	ipsoProcessOwner DisplayString,
+	ipsoProcessMemory INTEGER,
+	ipsoProcessPercentCPU INTEGER
+}
+
+	ipsoProcessID OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"This process's ID. "
+	::= { ipsoProcessEntry 1 }
+
+	ipsoProcessParentID OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The ID of this process's parent process. "
+	::= { ipsoProcessEntry 2 }
+
+	ipsoProcessOwner OBJECT-TYPE
+	SYNTAX DisplayString
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The name of the user who is given execution of this
+		 process. "
+	::= { ipsoProcessEntry 3 }
+
+	ipsoProcessMemory OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The amount of memory in kilobytes which this process
+		 is utilizing in its current execution state. "
+	::= { ipsoProcessEntry 4 }
+
+	ipsoProcessPercentCPU OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The percentage of the CPU cycle which this process
+		 is utilizing in its current execution state. "
+	::= { ipsoProcessEntry 5 }
+
+-- *******************************************************************
+--   Trap Definitions
+-- *******************************************************************
+     
+    systemTraps OBJECT IDENTIFIER ::= { ipsoNotificationGroup 1 }
+
+    systemTrapConfigurationChange NOTIFICATION-TYPE
+	STATUS        current
+	DESCRIPTION
+                "The trap which indicates a temporary configuration change."
+        ::= { systemTraps 1 }
+
+    systemTrapConfigurationFileChange NOTIFICATION-TYPE
+        OBJECTS       { ipsoConfigFilePath
+                      }
+	STATUS        current
+	DESCRIPTION
+                "The trap which indicates a change in the configuration file."
+        ::= { systemTraps 2 }
+
+    systemTrapConfigurationSaveChange NOTIFICATION-TYPE
+        OBJECTS       { ipsoConfigFilePath
+                      }
+	STATUS        current
+	DESCRIPTION
+                "The trap which indicates a permanent configuration change 
+                which is written to the configuration file."
+        ::= { systemTraps 3 }
+    
+    systemTrapLowDiskSpace NOTIFICATION-TYPE
+        OBJECTS       { hrPartitionIndex,
+                        hrPartitionLabel,
+                        hrPartitionSize,
+                        hrFSMountPoint
+                      }
+	STATUS        current
+	DESCRIPTION
+		"The trap which indicates if the disk space is low."
+	::= { systemTraps 4 }
+
+    systemTrapNoDiskSpace NOTIFICATION-TYPE
+        OBJECTS       { hrPartitionIndex,
+                        hrPartitionLabel,
+                        hrPartitionSize,
+                        hrFSMountPoint
+                      }
+	STATUS        current
+	DESCRIPTION
+		"The trap which indicates that there is no more disk space
+		available."
+	::= { systemTraps 5 }
+
+END

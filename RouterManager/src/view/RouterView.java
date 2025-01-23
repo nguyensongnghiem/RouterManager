@@ -3,8 +3,8 @@ package view;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import model.Router;
-import model.imp.NokiaRouter;
+import model.router.Router;
+import model.router.imp.NokiaRouter;
 
 public class RouterView {
     private Scanner scanner = new Scanner(System.in);

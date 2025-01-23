@@ -1,28 +1,20 @@
 package service.imp;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.jcraft.jsch.*;
 
-import model.Router;
-
+import model.router.Router;
 import repository.IRouterRepo;
 import repository.imp.RouterRepo;
 import service.IRouterService;
 
 public class RouterService implements IRouterService {
-    private IRouterRepo routerRepo = new RouterRepo();    
+    private IRouterRepo routerRepo = new RouterRepo();
 
     @Override
     public String addRouter(Router router) {
@@ -58,10 +50,10 @@ public class RouterService implements IRouterService {
     }
 
     @Override
-    public ArrayList<String> getRunArea(String name) {        
+    public ArrayList<String> getRunArea(String name) {
         // String hostname = routerRepo.getRouter(name).getIp();
-        Router router = getRouter(name);   
-        System.out.println(router);    
+        Router router = getRouter(name);
+        System.out.println(router);
         ArrayList<String> areaList = router.getRunArea();
         return areaList;
     }
@@ -73,17 +65,8 @@ public class RouterService implements IRouterService {
 
     @Override
     public boolean isReachable(String name) {
-        String hostname = routerRepo.getRouter(name).getIp();
-        InetAddress inet;
-        // Ping router check
-        try {
-            inet = InetAddress.getByName(hostname);
-            return inet.isReachable(5000);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
+        Router router = routerRepo.getRouter(name);
+        return router.isReachable();        
     }
 
     @Override
@@ -92,11 +75,11 @@ public class RouterService implements IRouterService {
         for (Router router : routers) {
             String name = router.getName();
             String ospfDB = routerRepo.getDbArea(name);
-            if (ospfDB == null || ospfDB =="[]") {
-            ArrayList<String> areaList = getRunArea(name);
-            Gson gson = new Gson();
-            String areaToJson = gson.toJson(areaList);
-            routerRepo.updateDbArea(name, areaToJson);
+            if (ospfDB == null || ospfDB == "[]") {
+                ArrayList<String> areaList = getRunArea(name);
+                Gson gson = new Gson();
+                String areaToJson = gson.toJson(areaList);
+                routerRepo.updateDbArea(name, areaToJson);
             }
         }
     }
@@ -105,9 +88,8 @@ public class RouterService implements IRouterService {
     public void updateAllPingStatustoDB() {
         ArrayList<Router> routers = routerRepo.getAll();
         for (Router router : routers) {
-            String name = router.getName();
-            boolean pingStatus = isReachable(name);
-            routerRepo.updateDbPing(name, pingStatus);
+            boolean pingStatus = router.isReachable();
+            routerRepo.updateDbPing(router.getName(), pingStatus);
         }
     }
 

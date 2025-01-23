@@ -2,7 +2,7 @@ package repository;
 
 import java.util.ArrayList;
 
-import model.Router;
+import model.router.Router;
 
 public interface IRouterRepo {
     ArrayList<Router> getAll();

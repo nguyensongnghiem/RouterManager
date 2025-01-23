@@ -2,7 +2,7 @@ package controller;
 
 import java.util.ArrayList;
 
-import model.Router;
+import model.router.Router;
 import service.IRouterService;
 import service.imp.RouterService;
 import view.RouterView;
